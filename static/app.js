@@ -161,10 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
             info.className = 'movie-info';
             info.textContent = `Year: ${m.year === 0 ? 'Unknown' : m.year}`;
 
-            const idInfo = document.createElement('div');
-            idInfo.className = 'movie-info';
-            idInfo.textContent = `ID: ${m.movieId}`;
-
             const ratingInfo = document.createElement('div');
             ratingInfo.className = 'movie-info';
             ratingInfo.textContent = `Rating: ${m.averageRating ? m.averageRating.toFixed(1) : 'N/A'} (${m.numVotes ? m.numVotes : 0} votes)`;
@@ -172,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(poster);
             card.appendChild(title);
             card.appendChild(info);
-            card.appendChild(idInfo);
             card.appendChild(ratingInfo);
 
             if (m.genres && m.genres.length > 0) {

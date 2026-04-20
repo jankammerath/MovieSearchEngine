@@ -24,6 +24,13 @@ type TitleBasic struct {
 	Genres         []string
 }
 
+// TitleRating represents a row in the title.ratings.tsv dataset
+type TitleRating struct {
+	TConst        string
+	AverageRating string
+	NumVotes      string
+}
+
 func getPoster(ttid string) string {
 	url := fmt.Sprintf("https://pro.imdb.com/title/%s/", ttid)
 
@@ -140,4 +147,61 @@ func getTitleBasics() ([]TitleBasic, error) {
 	}
 
 	return titles, nil
+}
+
+func getTitleRatings() (map[string]TitleRating, error) {
+	url := "https://datasets.imdbws.com/title.ratings.tsv.gz"
+	fmt.Printf("Downloading dataset from %s...\n", url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("Failed to download file: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Bad status: %s", resp.Status)
+	}
+
+	gzReader, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to create gzip reader: %v", err)
+	}
+	defer gzReader.Close()
+
+	csvReader := csv.NewReader(gzReader)
+	csvReader.Comma = '\t'
+	csvReader.LazyQuotes = true
+	csvReader.FieldsPerRecord = -1
+
+	// Read and discard header
+	_, err = csvReader.Read()
+	if err != nil {
+		log.Fatalf("Failed to read header: %v", err)
+	}
+
+	ratings := make(map[string]TitleRating)
+
+	fmt.Println("Parsing ratings dataset...")
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			continue
+		}
+
+		if len(record) < 3 {
+			continue
+		}
+
+		ratings[record[0]] = TitleRating{
+			TConst:        record[0],
+			AverageRating: record[1],
+			NumVotes:      record[2],
+		}
+	}
+
+	return ratings, nil
 }

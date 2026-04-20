@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+	"strconv"
+)
 
 func containsString(slice []string, item string) bool {
 	for _, s := range slice {
@@ -21,10 +25,12 @@ func containsInt16(slice []int16, item int16) bool {
 }
 
 type MovieItem struct {
-	MovieID string   `json:"movieId"`
-	Title   string   `json:"title"`
-	Year    int16    `json:"year"`
-	Genres  []string `json:"genres"`
+	MovieID       string   `json:"movieId"`
+	Title         string   `json:"title"`
+	Year          int16    `json:"year"`
+	Genres        []string `json:"genres"`
+	AverageRating float64  `json:"averageRating,omitempty"`
+	NumVotes      int      `json:"numVotes,omitempty"`
 }
 
 type SearchEngine struct {
@@ -35,7 +41,7 @@ type SearchEngine struct {
 	genres   []string
 }
 
-func NewSearchEngine(movies []TitleBasic) *SearchEngine {
+func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *SearchEngine {
 	engine := &SearchEngine{
 		movies:   make([]MovieItem, 0, len(movies)),
 		yearMap:  make(map[int16][]*MovieItem),
@@ -54,24 +60,42 @@ func NewSearchEngine(movies []TitleBasic) *SearchEngine {
 			fmt.Sscanf(title.StartYear, "%d", &year)
 		}
 
+		var avgRating float64
+		var numVotes int
+		if rating, ok := ratings[title.TConst]; ok {
+			avgRating, _ = strconv.ParseFloat(rating.AverageRating, 64)
+			numVotes, _ = strconv.Atoi(rating.NumVotes)
+		}
+
 		movie := MovieItem{
-			MovieID: title.TConst,
-			Title:   title.PrimaryTitle,
-			Year:    year,
-			Genres:  title.Genres,
+			MovieID:       title.TConst,
+			Title:         title.PrimaryTitle,
+			Year:          year,
+			Genres:        title.Genres,
+			AverageRating: avgRating,
+			NumVotes:      numVotes,
 		}
 
 		engine.movies = append(engine.movies, movie)
+	}
+
+	sort.Slice(engine.movies, func(i, j int) bool {
+		return engine.movies[i].AverageRating > engine.movies[j].AverageRating
+	})
+
+	for i := range engine.movies {
+		m := &engine.movies[i]
+		year := m.Year
 
 		if year != 0 {
-			engine.yearMap[year] = append(engine.yearMap[year], &engine.movies[len(engine.movies)-1])
+			engine.yearMap[year] = append(engine.yearMap[year], m)
 			if !containsInt16(engine.years, year) {
 				engine.years = append(engine.years, year)
 			}
 		}
 
-		for _, genre := range title.Genres {
-			engine.genreMap[genre] = append(engine.genreMap[genre], &engine.movies[len(engine.movies)-1])
+		for _, genre := range m.Genres {
+			engine.genreMap[genre] = append(engine.genreMap[genre], m)
 			if !containsString(engine.genres, genre) {
 				engine.genres = append(engine.genres, genre)
 			}

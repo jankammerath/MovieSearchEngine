@@ -17,7 +17,14 @@ func main() {
 
 	fmt.Printf("Successfully imported %d titles.\n", len(titles))
 
-	searchEngine := NewSearchEngine(titles)
+	ratings, err := getTitleRatings()
+	if err != nil {
+		log.Fatalf("Error getting title ratings: %v", err)
+	}
+
+	fmt.Printf("Successfully imported %d ratings.\n", len(ratings))
+
+	searchEngine := NewSearchEngine(titles, ratings)
 	fmt.Printf("Search engine initialized with %d movies.\n", len(searchEngine.movies))
 	fmt.Printf("Search engine has %d unique years.\n", len(searchEngine.years))
 	fmt.Printf("Search engine has %d unique genres.\n", len(searchEngine.genres))

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMDb Movie Search</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 IMDb Movie Search</h1>
+        </header>
+
+        <main>
+            <section class="filters">
+                <div class="filter-group">
+                    <label for="genre">Genre:</label>
+                    <select id="genre">
+                        <option value="">Any Genre</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="startYear">Start Year:</label>
+                    <select id="startYear">
+                        <option value="">Any</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="endYear">End Year:</label>
+                    <select id="endYear">
+                        <option value="">Any</option>
+                    </select>
+                </div>
+
+                <button id="searchBtn">Search Movies</button>
+            </section>
+
+            <section class="results">
+                <h2>Results (<span id="resultsCount">0</span> displayed)</h2>
+                <div id="movieGrid" class="movie-grid">
+                    <!-- Movie cards will be inserted here -->
+                </div>
+                <div class="pagination">
+                    <button id="prevBtn" disabled>Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button id="nextBtn" disabled>Next</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

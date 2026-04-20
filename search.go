@@ -21,10 +21,10 @@ func containsInt16(slice []int16, item int16) bool {
 }
 
 type MovieItem struct {
-	movieId string
-	title   string
-	year    int16
-	genres  []string
+	MovieID string   `json:"movieId"`
+	Title   string   `json:"title"`
+	Year    int16    `json:"year"`
+	Genres  []string `json:"genres"`
 }
 
 type SearchEngine struct {
@@ -55,10 +55,10 @@ func NewSearchEngine(movies []TitleBasic) *SearchEngine {
 		}
 
 		movie := MovieItem{
-			movieId: title.TConst,
-			title:   title.PrimaryTitle,
-			year:    year,
-			genres:  title.Genres,
+			MovieID: title.TConst,
+			Title:   title.PrimaryTitle,
+			Year:    year,
+			Genres:  title.Genres,
 		}
 
 		engine.movies = append(engine.movies, movie)
@@ -97,13 +97,17 @@ func (e *SearchEngine) Search(startYear, endYear int16, genre string, offset, li
 		// If no genre but there is a year range, use the year map
 		for year, movies := range e.yearMap {
 			if (startYear == 0 || year >= startYear) && (endYear == 0 || year <= endYear) {
-				allResults = append(allResults, movies...)
+				for _, m := range movies {
+					if genre == "" || containsString(m.Genres, genre) {
+						allResults = append(allResults, m)
+					}
+				}
 			}
 		}
 	} else if genre != "" {
 		// If a genre is specified, use the genre index first
 		for _, m := range e.genreMap[genre] {
-			if (startYear == 0 || m.year >= startYear) && (endYear == 0 || m.year <= endYear) {
+			if (startYear == 0 || m.Year >= startYear) && (endYear == 0 || m.Year <= endYear) {
 				allResults = append(allResults, m)
 			}
 		}

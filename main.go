@@ -62,6 +62,7 @@ func main() {
 		}
 		defer resp.Body.Close()
 
+		c.Header("Cache-Control", "public, max-age=2592000") // 30 days
 		c.DataFromReader(http.StatusOK, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
 	})
 

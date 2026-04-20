@@ -121,7 +121,6 @@ func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating, langua
 }
 
 // Search returns a list of movies matching the optional year range, genre and language.
-// Use 0 for startYear/endYear to represent no bound, and "" for no genre/language filter.
 func (e *SearchEngine) Search(startYear, endYear int16, genre string, language string, offset, limit int) []*MovieItem {
 	if limit <= 0 {
 		limit = 32
@@ -130,52 +129,65 @@ func (e *SearchEngine) Search(startYear, endYear int16, genre string, language s
 		offset = 0
 	}
 
-	var allResults []*MovieItem
+	results := make([]*MovieItem, 0, limit)
+	skipped := 0
 
-	if startYear != 0 || endYear != 0 {
-		// If there is a year range, use the year map
-		for year, movies := range e.yearMap {
-			if (startYear == 0 || year >= startYear) && (endYear == 0 || year <= endYear) {
-				for _, m := range movies {
-					if (genre == "" || containsString(m.Genres, genre)) && (language == "" || containsString(m.Languages, language)) {
-						allResults = append(allResults, m)
-					}
-				}
-			}
+	// Helper function to check filters and manage offset/limit
+	// Returns true if we have reached our limit and should stop searching.
+	addIfMatch := func(m *MovieItem) bool {
+		if (startYear != 0 && m.Year < startYear) || (endYear != 0 && m.Year > endYear) {
+			return false
+		}
+		if genre != "" && !containsString(m.Genres, genre) {
+			return false
+		}
+		if language != "" && !containsString(m.Languages, language) {
+			return false
+		}
+
+		if skipped < offset {
+			skipped++
+			return false
+		}
+
+		results = append(results, m)
+		return len(results) == limit
+	}
+
+	// Determine the smallest slice to iterate through to minimize pointer chasing.
+	// Since all these slices were built from e.movies (which is sorted by NumVotes),
+	// iterating them sequentially automatically preserves the NumVotes ranking order!
+	var searchSet []*MovieItem
+
+	if genre != "" && language != "" {
+		// Pick the smaller subset
+		if len(e.genreMap[genre]) < len(e.languageMap[language]) {
+			searchSet = e.genreMap[genre]
+		} else {
+			searchSet = e.languageMap[language]
 		}
 	} else if genre != "" {
-		// If a genre is specified, use the genre index
-		for _, m := range e.genreMap[genre] {
-			if (startYear == 0 || m.Year >= startYear) && (endYear == 0 || m.Year <= endYear) {
-				if language == "" || containsString(m.Languages, language) {
-					allResults = append(allResults, m)
-				}
-			}
-		}
+		searchSet = e.genreMap[genre]
 	} else if language != "" {
-		// If a language is specified, use the language index
-		for _, m := range e.languageMap[language] {
-			if (startYear == 0 || m.Year >= startYear) && (endYear == 0 || m.Year <= endYear) {
-				if genre == "" || containsString(m.Genres, genre) {
-					allResults = append(allResults, m)
-				}
+		searchSet = e.languageMap[language]
+	}
+
+	// If we determined a specific map index is best:
+	if searchSet != nil {
+		for _, m := range searchSet {
+			if addIfMatch(m) {
+				break
 			}
 		}
 	} else {
-		// If no filters are provided, return all movies
+		// If only years are specified, or no filters are specified,
+		// iterate the main array to preserve global NumVotes sorting.
 		for i := range e.movies {
-			allResults = append(allResults, &e.movies[i])
+			if addIfMatch(&e.movies[i]) {
+				break
+			}
 		}
 	}
 
-	if offset >= len(allResults) {
-		return []*MovieItem{}
-	}
-
-	end := offset + limit
-	if end > len(allResults) {
-		end = len(allResults)
-	}
-
-	return allResults[offset:end]
+	return results
 }

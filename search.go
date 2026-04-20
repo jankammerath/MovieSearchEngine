@@ -93,18 +93,18 @@ func (e *SearchEngine) Search(startYear, endYear int16, genre string, offset, li
 
 	var allResults []*MovieItem
 
-	if genre != "" {
-		// If a genre is specified, use the genre index first
-		for _, m := range e.genreMap[genre] {
-			if (startYear == 0 || m.year >= startYear) && (endYear == 0 || m.year <= endYear) {
-				allResults = append(allResults, m)
-			}
-		}
-	} else if startYear != 0 || endYear != 0 {
+	if startYear != 0 || endYear != 0 {
 		// If no genre but there is a year range, use the year map
 		for year, movies := range e.yearMap {
 			if (startYear == 0 || year >= startYear) && (endYear == 0 || year <= endYear) {
 				allResults = append(allResults, movies...)
+			}
+		}
+	} else if genre != "" {
+		// If a genre is specified, use the genre index first
+		for _, m := range e.genreMap[genre] {
+			if (startYear == 0 || m.year >= startYear) && (endYear == 0 || m.year <= endYear) {
+				allResults = append(allResults, m)
 			}
 		}
 	} else {

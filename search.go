@@ -50,6 +50,9 @@ func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *Searc
 		genres:   make([]string, 0),
 	}
 
+	var totalRatingSum float64
+	var totalVotesSum int
+
 	for _, title := range movies {
 		if title.TitleType != "movie" {
 			continue
@@ -76,11 +79,31 @@ func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *Searc
 			NumVotes:      numVotes,
 		}
 
+		if numVotes > 0 {
+			totalRatingSum += avgRating * float64(numVotes)
+			totalVotesSum += numVotes
+		}
+
 		engine.movies = append(engine.movies, movie)
 	}
 
+	var C float64
+	if totalVotesSum > 0 {
+		C = totalRatingSum / float64(totalVotesSum)
+	}
+	m := 1000.0
+
 	sort.Slice(engine.movies, func(i, j int) bool {
-		return engine.movies[i].AverageRating > engine.movies[j].AverageRating
+		mi := engine.movies[i]
+		mj := engine.movies[j]
+
+		vi := float64(mi.NumVotes)
+		wi := (mi.AverageRating*vi + C*m) / (vi + m)
+
+		vj := float64(mj.NumVotes)
+		wj := (mj.AverageRating*vj + C*m) / (vj + m)
+
+		return wi > wj
 	})
 
 	for i := range engine.movies {

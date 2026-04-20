@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -21,6 +22,42 @@ type TitleBasic struct {
 	EndYear        string
 	RuntimeMinutes string
 	Genres         []string
+}
+
+func getPoster(ttid string) string {
+	url := fmt.Sprintf("https://www.imdb.com/title/%s/", ttid)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return ""
+	}
+
+	// Set a realistic User-Agent as IMDb often blocks defaults
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		fmt.Printf("Failed to fetch %s: %v\n", url, err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+
+	// Parse the og:image meta tag using regex
+	re := regexp.MustCompile(`property="og:image"[^>]*content="([^"]+)"`)
+	matches := re.FindSubmatch(body)
+	if len(matches) > 1 {
+		return string(matches[1])
+	}
+	return ""
 }
 
 func getTitleBasics() ([]TitleBasic, error) {

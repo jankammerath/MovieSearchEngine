@@ -29,25 +29,30 @@ type MovieItem struct {
 	Title         string   `json:"title"`
 	Year          int16    `json:"year"`
 	Genres        []string `json:"genres"`
+	Languages     []string `json:"languages"`
 	AverageRating float64  `json:"averageRating,omitempty"`
 	NumVotes      int      `json:"numVotes,omitempty"`
 }
 
 type SearchEngine struct {
-	movies   []MovieItem
-	yearMap  map[int16][]*MovieItem
-	genreMap map[string][]*MovieItem
-	years    []int16
-	genres   []string
+	movies      []MovieItem
+	yearMap     map[int16][]*MovieItem
+	genreMap    map[string][]*MovieItem
+	languageMap map[string][]*MovieItem
+	years       []int16
+	genres      []string
+	languages   []string
 }
 
-func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *SearchEngine {
+func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating, languages map[string][]string) *SearchEngine {
 	engine := &SearchEngine{
-		movies:   make([]MovieItem, 0, len(movies)),
-		yearMap:  make(map[int16][]*MovieItem),
-		genreMap: make(map[string][]*MovieItem),
-		years:    make([]int16, 0),
-		genres:   make([]string, 0),
+		movies:      make([]MovieItem, 0, len(movies)),
+		yearMap:     make(map[int16][]*MovieItem),
+		genreMap:    make(map[string][]*MovieItem),
+		languageMap: make(map[string][]*MovieItem),
+		years:       make([]int16, 0),
+		genres:      make([]string, 0),
+		languages:   make([]string, 0),
 	}
 
 	var totalRatingSum float64
@@ -70,11 +75,14 @@ func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *Searc
 			numVotes, _ = strconv.Atoi(rating.NumVotes)
 		}
 
+		movieLangs := languages[title.TConst]
+
 		movie := MovieItem{
 			MovieID:       title.TConst,
 			Title:         title.PrimaryTitle,
 			Year:          year,
 			Genres:        title.Genres,
+			Languages:     movieLangs,
 			AverageRating: avgRating,
 			NumVotes:      numVotes,
 		}
@@ -123,14 +131,21 @@ func NewSearchEngine(movies []TitleBasic, ratings map[string]TitleRating) *Searc
 				engine.genres = append(engine.genres, genre)
 			}
 		}
+
+		for _, lang := range m.Languages {
+			engine.languageMap[lang] = append(engine.languageMap[lang], m)
+			if !containsString(engine.languages, lang) {
+				engine.languages = append(engine.languages, lang)
+			}
+		}
 	}
 
 	return engine
 }
 
-// Search returns a list of movies matching the optional year range and genre.
-// Use 0 for startYear/endYear to represent no bound, and "" for no genre filter.
-func (e *SearchEngine) Search(startYear, endYear int16, genre string, offset, limit int) []*MovieItem {
+// Search returns a list of movies matching the optional year range, genre and language.
+// Use 0 for startYear/endYear to represent no bound, and "" for no genre/language filter.
+func (e *SearchEngine) Search(startYear, endYear int16, genre string, language string, offset, limit int) []*MovieItem {
 	if limit <= 0 {
 		limit = 32
 	}
@@ -141,21 +156,32 @@ func (e *SearchEngine) Search(startYear, endYear int16, genre string, offset, li
 	var allResults []*MovieItem
 
 	if startYear != 0 || endYear != 0 {
-		// If no genre but there is a year range, use the year map
+		// If there is a year range, use the year map
 		for year, movies := range e.yearMap {
 			if (startYear == 0 || year >= startYear) && (endYear == 0 || year <= endYear) {
 				for _, m := range movies {
-					if genre == "" || containsString(m.Genres, genre) {
+					if (genre == "" || containsString(m.Genres, genre)) && (language == "" || containsString(m.Languages, language)) {
 						allResults = append(allResults, m)
 					}
 				}
 			}
 		}
 	} else if genre != "" {
-		// If a genre is specified, use the genre index first
+		// If a genre is specified, use the genre index
 		for _, m := range e.genreMap[genre] {
 			if (startYear == 0 || m.Year >= startYear) && (endYear == 0 || m.Year <= endYear) {
-				allResults = append(allResults, m)
+				if language == "" || containsString(m.Languages, language) {
+					allResults = append(allResults, m)
+				}
+			}
+		}
+	} else if language != "" {
+		// If a language is specified, use the language index
+		for _, m := range e.languageMap[language] {
+			if (startYear == 0 || m.Year >= startYear) && (endYear == 0 || m.Year <= endYear) {
+				if genre == "" || containsString(m.Genres, genre) {
+					allResults = append(allResults, m)
+				}
 			}
 		}
 	} else {

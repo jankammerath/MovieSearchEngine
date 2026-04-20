@@ -24,7 +24,14 @@ func main() {
 
 	fmt.Printf("Successfully imported %d ratings.\n", len(ratings))
 
-	searchEngine := NewSearchEngine(titles, ratings)
+	languages, err := getTitleLanguages()
+	if err != nil {
+		log.Fatalf("Error getting title languages: %v", err)
+	}
+
+	fmt.Printf("Successfully imported %d languages.\n", len(languages))
+
+	searchEngine := NewSearchEngine(titles, ratings, languages)
 	fmt.Printf("Search engine initialized with %d movies.\n", len(searchEngine.movies))
 	fmt.Printf("Search engine has %d unique years.\n", len(searchEngine.years))
 	fmt.Printf("Search engine has %d unique genres.\n", len(searchEngine.genres))
@@ -73,6 +80,10 @@ func main() {
 			c.JSON(http.StatusOK, searchEngine.genres)
 		})
 
+		api.GET("/language", func(c *gin.Context) {
+			c.JSON(http.StatusOK, searchEngine.languages)
+		})
+
 		api.GET("/year", func(c *gin.Context) {
 			c.JSON(http.StatusOK, searchEngine.years)
 		})
@@ -81,6 +92,7 @@ func main() {
 			startYearStr := c.Query("startYear")
 			endYearStr := c.Query("endYear")
 			genre := c.Query("genre")
+			language := c.Query("language")
 			offsetStr := c.Query("offset")
 			limitStr := c.Query("limit")
 
@@ -102,7 +114,7 @@ func main() {
 				limit, _ = strconv.Atoi(limitStr)
 			}
 
-			results := searchEngine.Search(startYear, endYear, genre, offset, limit)
+			results := searchEngine.Search(startYear, endYear, genre, language, offset, limit)
 			c.JSON(http.StatusOK, results)
 		})
 	}

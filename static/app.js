@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const genreSelect = document.getElementById('genre');
+    const languageSelect = document.getElementById('language');
     const startYearSelect = document.getElementById('startYear');
     const endYearSelect = document.getElementById('endYear');
     const searchBtn = document.getElementById('searchBtn');
@@ -48,6 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Fetch Languages
+            const langRes = await fetch('/api/language');
+            let languages = await langRes.json();
+            languages.sort();
+            languages.forEach(l => {
+                if (l) {
+                    const opt = document.createElement('option');
+                    // some languages might be country codes vs real words, but we render directly
+                    opt.value = l;
+                    opt.textContent = l;
+                    languageSelect.appendChild(opt);
+                }
+            });
+
             // Fetch Years
             const yearRes = await fetch('/api/year');
             let years = await yearRes.json();
@@ -75,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function performSearch() {
         const genre = genreSelect.value;
+        const language = languageSelect.value;
         const startYear = startYearSelect.value;
         const endYear = endYearSelect.value;
 
@@ -85,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         if (genre) params.append('genre', genre);
+        if (language) params.append('language', language);
         if (startYear) params.append('startYear', startYear);
         if (endYear) params.append('endYear', endYear);
 

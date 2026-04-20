@@ -205,3 +205,70 @@ func getTitleRatings() (map[string]TitleRating, error) {
 
 	return ratings, nil
 }
+
+func getTitleLanguages() (map[string][]string, error) {
+	url := "https://datasets.imdbws.com/title.akas.tsv.gz"
+	fmt.Printf("Downloading dataset from %s...\n", url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("Failed to download file: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Bad status: %s", resp.Status)
+	}
+
+	gzReader, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to create gzip reader: %v", err)
+	}
+	defer gzReader.Close()
+
+	csvReader := csv.NewReader(gzReader)
+	csvReader.Comma = '\t'
+	csvReader.LazyQuotes = true
+	csvReader.FieldsPerRecord = -1
+
+	// Read and discard header
+	_, err = csvReader.Read()
+	if err != nil {
+		log.Fatalf("Failed to read header: %v", err)
+	}
+
+	languages := make(map[string][]string)
+
+	fmt.Println("Parsing languages dataset...")
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			continue
+		}
+
+		if len(record) < 5 {
+			continue
+		}
+
+		titleId := record[0]
+		language := record[4]
+
+		if language != "\\N" && language != "" {
+			found := false
+			for _, l := range languages[titleId] {
+				if l == language {
+					found = true
+					break
+				}
+			}
+			if !found {
+				languages[titleId] = append(languages[titleId], language)
+			}
+		}
+	}
+
+	return languages, nil
+}

@@ -28,6 +28,36 @@ func main() {
 	r.Static("/static", "./static")
 	r.StaticFile("/", "./static/index.html")
 
+	r.GET("/media/:ttid", func(c *gin.Context) {
+		ttid := c.Param("ttid")
+		posterURL := getPoster(ttid)
+		if posterURL == "" {
+			c.String(http.StatusNotFound, "Poster not found")
+			return
+		}
+
+		req, err := http.NewRequest("GET", posterURL, nil)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Failed to prepare image request")
+			return
+		}
+
+		// Some Amazon/IMDb image servers might require a realistic User-Agent
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			c.String(http.StatusNotFound, "Failed to download image")
+			if resp != nil {
+				resp.Body.Close()
+			}
+			return
+		}
+		defer resp.Body.Close()
+
+		c.DataFromReader(http.StatusOK, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
+	})
+
 	// API Endpoints
 	api := r.Group("/api")
 	{

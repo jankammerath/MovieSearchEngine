@@ -124,6 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'movie-card';
 
+            const poster = document.createElement('img');
+            poster.className = 'movie-poster';
+            poster.src = `/media/${m.movieId}`;
+            poster.alt = `${m.title} poster`;
+            poster.onerror = () => { 
+                poster.src = 'https://via.placeholder.com/200x300?text=No+Poster'; 
+            };
+
             const title = document.createElement('div');
             title.className = 'movie-title';
             title.textContent = m.title;
@@ -136,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             idInfo.className = 'movie-info';
             idInfo.textContent = `ID: ${m.movieId}`;
 
+            card.appendChild(poster);
             card.appendChild(title);
             card.appendChild(info);
             card.appendChild(idInfo);

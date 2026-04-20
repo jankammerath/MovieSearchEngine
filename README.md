@@ -1,5 +1,8 @@
 # IMDb Movie Search
 
+**This application is an example from my Medium article: 
+[The Power of the Pointer: How Memory Management Is Still Relevant Today](https://medium.com/@jankammerath/the-power-of-the-pointer-how-memory-management-is-still-relevant-today-bf319b589e28).**
+
 ![IMDb Movie Search Screenshot](screenshot.png)
 
 A fast, in-memory search engine and web application that allows you to explore the IMDb dataset. The application automatically downloads the latest datasets on startup, indexes them in memory, and provides blazing-fast search capabilities with dynamic poster fetching.

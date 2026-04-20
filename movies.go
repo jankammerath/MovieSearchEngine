@@ -25,7 +25,7 @@ type TitleBasic struct {
 }
 
 func getPoster(ttid string) string {
-	url := fmt.Sprintf("https://www.imdb.com/title/%s/", ttid)
+	url := fmt.Sprintf("https://www.imdb.com/de/title/%s/", ttid)
 
 	println("Fetching poster from:", url)
 
@@ -44,7 +44,7 @@ func getPoster(ttid string) string {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return ""
 	}
 

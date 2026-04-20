@@ -144,10 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
             idInfo.className = 'movie-info';
             idInfo.textContent = `ID: ${m.movieId}`;
 
+            const ratingInfo = document.createElement('div');
+            ratingInfo.className = 'movie-info';
+            ratingInfo.textContent = `Rating: ${m.averageRating ? m.averageRating.toFixed(1) : 'N/A'} (${m.numVotes ? m.numVotes : 0} votes)`;
+
             card.appendChild(poster);
             card.appendChild(title);
             card.appendChild(info);
             card.appendChild(idInfo);
+            card.appendChild(ratingInfo);
 
             if (m.genres && m.genres.length > 0) {
                 m.genres.forEach(g => {

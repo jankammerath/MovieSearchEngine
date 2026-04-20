@@ -27,6 +27,8 @@ type TitleBasic struct {
 func getPoster(ttid string) string {
 	url := fmt.Sprintf("https://www.imdb.com/title/%s/", ttid)
 
+	println("Fetching poster from:", url)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return ""
@@ -50,6 +52,9 @@ func getPoster(ttid string) string {
 	if err != nil {
 		return ""
 	}
+
+	println("Response body length:", len(body))
+	println(string(body))
 
 	// Parse the og:image meta tag using regex
 	re := regexp.MustCompile(`property="og:image"[^>]*content="([^"]+)"`)

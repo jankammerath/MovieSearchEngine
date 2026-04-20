@@ -121,15 +121,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         movies.forEach(m => {
-            const card = document.createElement('div');
+            const card = document.createElement('a');
             card.className = 'movie-card';
+            card.href = `https://www.imdb.com/title/${m.movieId}/`;
+            card.target = '_blank';
+            card.style.textDecoration = 'none';
+            card.style.color = 'inherit';
 
             const poster = document.createElement('img');
             poster.className = 'movie-poster';
             poster.src = `/media/${m.movieId}`;
             poster.alt = `${m.title} poster`;
             poster.onerror = () => { 
-                poster.src = 'https://via.placeholder.com/200x300?text=No+Poster'; 
+                poster.src = 'https://placehold.co/200x300?text=No+Poster'; 
             };
 
             const title = document.createElement('div');

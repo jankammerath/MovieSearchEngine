@@ -58,7 +58,6 @@ func getPoster(ttid string) string {
 	}
 
 	println("Response body length:", len(body))
-	println(string(body))
 
 	// Makes the quotes optional and captures until the next quote, space, or closing bracket >
 	re := regexp.MustCompile(`property="og:image"[^>]*content=["']?([^"'\s>]+)["']?`)

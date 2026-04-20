@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,12 @@ func main() {
 	fmt.Printf("Search engine initialized with %d movies.\n", len(searchEngine.movies))
 	fmt.Printf("Search engine has %d unique years.\n", len(searchEngine.years))
 	fmt.Printf("Search engine has %d unique genres.\n", len(searchEngine.genres))
+
+	// Free up memory from raw datasets after indexing and trigger Garbage Collection
+	titles = nil
+	ratings = nil
+	languages = nil
+	runtime.GC()
 
 	r := gin.Default()
 
